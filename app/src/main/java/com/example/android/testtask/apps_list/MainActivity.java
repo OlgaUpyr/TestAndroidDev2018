@@ -1,5 +1,6 @@
 package com.example.android.testtask.apps_list;
 
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -27,6 +28,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -37,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements
     private AppAdapter appAdapter;
     private List<AppInfo> appUsageStatsList;
     private DateFormat dateFormat = new SimpleDateFormat();
+    private static final long DEFAULT_NUM_OF_MILLIS = 10800000;
 
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -89,35 +93,52 @@ public class MainActivity extends AppCompatActivity implements
             dialog.show();
         }
         else {
+            Collections.sort(queryUsageStats, new LastTimeUsedComparatorDesc());
             appUsageStatsList = new ArrayList<>();
             for (int i = 0; i < queryUsageStats.size(); i++) {
-                AppInfo appInfo = new AppInfo();
-                appInfo.setPackageName(queryUsageStats.get(i).getPackageName());
-                String appName = getAppNameFromPackage(appInfo.getPackageName(), MainActivity.this);
-                if(appName != null){
-                    appInfo.setAppName(appName);
+                if(!(isPackageNameExist(appUsageStatsList, queryUsageStats.get(i).getPackageName()))) {
+                    AppInfo appInfo = new AppInfo();
+                    appInfo.setPackageName(queryUsageStats.get(i).getPackageName());
+                    String appName = getAppNameFromPackage(appInfo.getPackageName(), MainActivity.this);
+                    if (appName != null) {
+                        appInfo.setAppName(appName);
+                    } else {
+                        appInfo.setAppName(appInfo.getPackageName());
+                        continue;
+                    }
+                    queryUsageStats.get(i).getLastTimeUsed();
+                    long timeInForeground = queryUsageStats.get(i).getTotalTimeInForeground();
+                    String timeOfUse = getTimeOfUseText(timeInForeground);
+                    appInfo.setTimeOfUse(timeOfUse);
+                    long lastTimeOfUse = queryUsageStats.get(i).getLastTimeUsed();
+                    if(lastTimeOfUse <= DEFAULT_NUM_OF_MILLIS) appInfo.setLastTimeUsed("-");
+                    else appInfo.setLastTimeUsed(dateFormat.format(new Date(lastTimeOfUse)));
+                    try {
+                        Drawable appIcon = MainActivity.this.getPackageManager()
+                                .getApplicationIcon(appInfo.getPackageName());
+                        appInfo.setAppIcon(appIcon);
+                    } catch (PackageManager.NameNotFoundException e) {
+                    }
+                    appUsageStatsList.add(appInfo);
                 }
-                else {
-                    appInfo.setAppName(appInfo.getPackageName());
-                    continue;
-                }
-                queryUsageStats.get(i).getLastTimeUsed();
-                long timeInForeground = queryUsageStats.get(i).getTotalTimeInForeground();
-                String timeOfUse = getTimeOfUseText(timeInForeground);
-                appInfo.setTimeOfUse(timeOfUse);
-
-
-                long lastTimeOfUse = queryUsageStats.get(i).getLastTimeUsed();
-                appInfo.setLastTimeUsed(dateFormat.format(new Date(lastTimeOfUse)));
-
-
-                try {
-                    Drawable appIcon = MainActivity.this.getPackageManager()
-                            .getApplicationIcon(appInfo.getPackageName());
-                    appInfo.setAppIcon(appIcon);
-                } catch (PackageManager.NameNotFoundException e) { }
-                appUsageStatsList.add(appInfo);
             }
+        }
+    }
+
+    private boolean isPackageNameExist(List<AppInfo> appInfoList, String packageName) {
+        for(AppInfo app : appInfoList) {
+            if(app.getPackageName().equals(packageName))
+                return true;
+        }
+        return false;
+    }
+
+    private static class LastTimeUsedComparatorDesc implements Comparator<UsageStats> {
+        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+        @Override
+        public int compare(UsageStats left, UsageStats right) {
+            return Long.compare(right.getLastTimeUsed(), left.getLastTimeUsed());
         }
     }
 
