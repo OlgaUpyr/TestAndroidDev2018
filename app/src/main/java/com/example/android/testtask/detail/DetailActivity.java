@@ -20,13 +20,9 @@ import com.example.android.testtask.apps_list.MainActivity;
 import com.example.android.testtask.model.AppInfo;
 import com.example.android.testtask.model.DetailInfo;
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.AxisBase;
-import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.DataSet;
-import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
@@ -34,7 +30,6 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public class DetailActivity extends AppCompatActivity
     implements View.OnClickListener {
@@ -102,16 +97,16 @@ public class DetailActivity extends AppCompatActivity
         } catch (PackageManager.NameNotFoundException e) { }
 
         getUsageStatsByInterval(UsageStatsManager.INTERVAL_DAILY);
-        getStatistic(dailyStatistic);
+        getStatistic(dailyStatistic, UsageStatsManager.INTERVAL_DAILY);
 
         getUsageStatsByInterval(UsageStatsManager.INTERVAL_WEEKLY);
-        getStatistic(weeklyStatistic);
+        getStatistic(weeklyStatistic, UsageStatsManager.INTERVAL_WEEKLY);
 
         getUsageStatsByInterval(UsageStatsManager.INTERVAL_MONTHLY);
-        getStatistic(monthlyStatistic);
+        getStatistic(monthlyStatistic, UsageStatsManager.INTERVAL_MONTHLY);
 
         getUsageStatsByInterval(UsageStatsManager.INTERVAL_YEARLY);
-        getStatistic(yearlyStatistic);
+        getStatistic(yearlyStatistic, UsageStatsManager.INTERVAL_YEARLY);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -131,23 +126,33 @@ public class DetailActivity extends AppCompatActivity
         }
 
         Collections.sort(queryUsageStats, new MainActivity.LastTimeUsedComparatorDesc());
+    }
 
+    private String switchValueByIntervalType(int intervalType, Calendar c) {
+        if (intervalType == UsageStatsManager.INTERVAL_DAILY)
+            return c.get(Calendar.DATE) + "/" + c.get(Calendar.MONTH) + "/" + c.get(Calendar.YEAR);
+        else if (intervalType == UsageStatsManager.INTERVAL_WEEKLY)
+            return c.get(Calendar.WEEK_OF_YEAR) + "/" + c.get(Calendar.YEAR);
+        else if (intervalType == UsageStatsManager.INTERVAL_MONTHLY)
+            return c.get(Calendar.MONTH) + "/" + c.get(Calendar.YEAR);
+        else
+            return c.get(Calendar.YEAR) + "";
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private void getStatistic(List<DetailInfo> statistic) {
+    private void getStatistic(List<DetailInfo> statistic, int intervalType) {
         statistic.clear();
         long currentDayOfUse = queryUsageStats.get(0).getLastTimeUsed();
         long timeOfUseByDay = 0;
         Calendar c = Calendar.getInstance();
         c.setTimeInMillis(new Date(currentDayOfUse).getTime());
-        String currentDayStr = c.get(Calendar.DATE) + "/" + c.get(Calendar.MONTH)+ "/" + c.get(Calendar.YEAR);
+        String currentDayStr = switchValueByIntervalType(intervalType, c);
         String tempCurrentDayStr;
 
         for (int i = 0; i < queryUsageStats.size(); i++) {
             c.clear();
             c.setTimeInMillis(new Date(queryUsageStats.get(i).getLastTimeUsed()).getTime());
-            tempCurrentDayStr = c.get(Calendar.DATE) + "/" + c.get(Calendar.MONTH)+ "/" + c.get(Calendar.YEAR);
+            tempCurrentDayStr = switchValueByIntervalType(intervalType, c);
             if (tempCurrentDayStr.equals(currentDayStr)) {
                 if(!(queryUsageStats.get(i).getLastTimeUsed() <= DEFAULT_NUM_OF_MILLIS))
                     timeOfUseByDay += queryUsageStats.get(i).getTotalTimeInForeground();
