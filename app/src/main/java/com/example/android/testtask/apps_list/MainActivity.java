@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements
         return false;
     }
 
-    private static class LastTimeUsedComparatorDesc implements Comparator<UsageStats> {
+    public static class LastTimeUsedComparatorDesc implements Comparator<UsageStats> {
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @RequiresApi(api = Build.VERSION_CODES.KITKAT)
         @Override
