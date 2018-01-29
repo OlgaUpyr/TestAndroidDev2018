@@ -3,6 +3,7 @@ package com.example.android.testtask.detail;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -19,6 +20,9 @@ import com.example.android.testtask.R;
 import com.example.android.testtask.apps_list.MainActivity;
 import com.example.android.testtask.model.AppInfo;
 import com.example.android.testtask.model.DetailInfo;
+import com.example.android.testtask.pin.CreatePinActivity;
+import com.example.android.testtask.pin.PinActivity;
+import com.example.android.testtask.util.UiUtil;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
@@ -49,6 +53,32 @@ public class DetailActivity extends AppCompatActivity
     private List<DetailInfo> yearlyStatistic;
 
     private BarChart barChart;
+
+    protected void onResume() {
+        super.onResume();
+
+        SharedPreferences sharedPreferences = getSharedPreferences("PREFS", 0);
+        String pin = sharedPreferences.getString("pin", "");
+
+        if ((UiUtil.nameOfLastStoppedActivity.equals(this.getClass().getName())
+                && !UiUtil.nameOfLastStoppedActivity.equals(PinActivity.class.getName()))
+                && !UiUtil.nameOfLastStoppedActivity.equals(CreatePinActivity.class.getName())) {
+            if (!UiUtil.isPINCodeActive)
+                UiUtil.promptPINCode(this, pin);
+        }
+    }
+
+    protected void onPause() {
+        super.onPause();
+
+        UiUtil.nameOfLastStoppedActivity = this.getClass().getName();
+    }
+
+    public void onStop () {
+        super.onStop();
+
+        UiUtil.nameOfLastStoppedActivity = this.getClass().getName();
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -149,19 +179,21 @@ public class DetailActivity extends AppCompatActivity
         String currentDayStr = switchValueByIntervalType(intervalType, c);
         String tempCurrentDayStr;
 
-        for (int i = 0; i < queryUsageStats.size(); i++) {
+        for (int i = 0; i < queryUsageStats.size(); ) {
             c.clear();
             c.setTimeInMillis(new Date(queryUsageStats.get(i).getLastTimeUsed()).getTime());
             tempCurrentDayStr = switchValueByIntervalType(intervalType, c);
-            if (tempCurrentDayStr.equals(currentDayStr)) {
-                if(!(queryUsageStats.get(i).getLastTimeUsed() <= DEFAULT_NUM_OF_MILLIS))
-                    timeOfUseByDay += queryUsageStats.get(i).getTotalTimeInForeground();
+            if (tempCurrentDayStr.equals(currentDayStr) && c.get(Calendar.YEAR) != 1970) {
+                timeOfUseByDay += queryUsageStats.get(i).getTotalTimeInForeground();
+                i++;
+            }
+            else if(c.get(Calendar.YEAR) == 1970){
+                i++;
             }
             else {
                 statistic.add(new DetailInfo(currentDayStr, timeOfUseByDay));
                 currentDayStr = tempCurrentDayStr;
                 timeOfUseByDay = 0;
-                i--;
             }
         }
     }

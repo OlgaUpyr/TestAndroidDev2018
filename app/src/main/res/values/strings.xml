@@ -6,4 +6,5 @@
     <string name="error_dialog_message">Failed to retrieve app usage statistics.</string>
     <string name="error_dialog_title">Error</string>
     <string name="ok">OK</string>
+    <string name="usage_permission">Permit usage access to track what other apps you\'re using and how often?</string>
 </resources>

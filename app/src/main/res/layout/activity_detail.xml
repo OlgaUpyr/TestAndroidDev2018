@@ -51,6 +51,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:textAlignment="center"
+                    android:textColor="@color/colorAccent"
                     android:textAppearance="?android:attr/textAppearanceLarge"
                     android:text="22m34s"/>
 
@@ -75,6 +76,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:textAlignment="center"
+                    android:textColor="@color/colorAccent"
                     android:textAppearance="?android:attr/textAppearanceLarge"
                     android:text="11m04s34s"/>
 
@@ -146,10 +148,5 @@
             android:layout_width="match_parent"
             android:layout_height="350sp"
             android:layout_margin="8dp"/>
-
-        <TextView
-            android:id="@+id/test"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
     </LinearLayout>
 </ScrollView>

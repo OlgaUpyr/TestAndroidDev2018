@@ -2,11 +2,13 @@ package com.example.android.testtask.apps_list;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.AppOpsManager;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Rect;
@@ -23,6 +25,9 @@ import android.view.View;
 import com.example.android.testtask.R;
 import com.example.android.testtask.detail.DetailActivity;
 import com.example.android.testtask.model.AppInfo;
+import com.example.android.testtask.pin.CreatePinActivity;
+import com.example.android.testtask.pin.PinActivity;
+import com.example.android.testtask.util.UiUtil;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -42,6 +47,31 @@ public class MainActivity extends AppCompatActivity implements
     private DateFormat dateFormat = new SimpleDateFormat();
     private static final long DEFAULT_NUM_OF_MILLIS = 10800000;
 
+    protected void onResume() {
+        super.onResume();
+
+        SharedPreferences sharedPreferences = getSharedPreferences("PREFS", 0);
+        String pin = sharedPreferences.getString("pin", "");
+
+        if ((UiUtil.nameOfLastStoppedActivity.equals(this.getClass().getName())
+                && !UiUtil.nameOfLastStoppedActivity.equals(PinActivity.class.getName()))
+                && !UiUtil.nameOfLastStoppedActivity.equals(CreatePinActivity.class.getName())) {
+            if (!UiUtil.isPINCodeActive)
+                UiUtil.promptPINCode(this, pin);
+        }
+    }
+
+    protected void onPause() {
+        super.onPause();
+
+        UiUtil.nameOfLastStoppedActivity = this.getClass().getName();
+    }
+
+    public void onStop () {
+        super.onStop();
+
+        UiUtil.nameOfLastStoppedActivity = this.getClass().getName();
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
